@@ -80,25 +80,34 @@ real implementations (not stubs) for the core subsystem:
 ## Status
 
 The headers in `cucascade-rocm/include/cucascade/` (consumed by Sirius via
-FetchContent) are **30 real implementations + 2 genuine stubs** (verified by
-grepping every header for the `throw std::runtime_error("cuCascade stub: ...")`
-marker). An earlier version of this doc claimed "7 real / 25 stub" — that was
-stale; the port progressed well past it.
+FetchContent) are all real implementations — the last two stubs (the
+disk-data representation clone and the NUMA-aware pinned allocator) were
+implemented. The `throw std::runtime_error("cuCascade stub: ...")` marker
+is gone from both of them; the two remaining occurrences of the string
+(`error.hpp`'s CUDA-error wrapper prefix and `data/common.hpp`'s
+dynamic_cast-null guard) are real runtime guards that predate this change
+and are documented below.
 
-The 2 genuine stubs are:
+What the last two implementations do:
 
-| Header | What throws |
+| Header | Implementation |
 |---|---|
-| `data/disk_data_representation.hpp` | `get_disk_table()`, `clone()` |
-| `memory/numa_region_pinned_host_allocator.hpp` | `allocate`, `operator rmm::...` |
+| `data/disk_data_representation.hpp` | `clone()` copies the backing file to `<path>.clone.<n>` via `memory::clone_disk_file` and wraps the new `disk_table_allocation`; sizes report the allocation's byte count |
+| `memory/numa_region_pinned_host_allocator.hpp` | `allocate()` = mmap + `mbind(2)` to the GPU's NUMA node (sysfs lookup by PCI bus ID) + `hipHostRegister`; `deallocate()` = `hipHostUnregister` + `munmap`; bounded by `mem_limit` via a single-counter CAS |
 
-The remaining 30 headers — including the full memory-reservation subsystem,
-the data-batch lifecycle (clone/convert/set_data), the representation types
-(gpu/host clone via cudf::copy / hipMemcpyAsync), topology discovery, events,
-the data-repository containers, and the representation converter registry —
-are real implementations backed by hipMalloc/hipMallocHost/hipEvent*/
+The memory-reservation subsystem, the data-batch lifecycle
+(clone/convert/set_data), the representation types (gpu/host clone via
+cudf::copy / hipMemcpyAsync), topology discovery, events, the
+data-repository containers, and the representation converter registry are
+real implementations backed by hipMalloc/hipMallocHost/hipEvent*/
 hipGetDevice* calls, not stubs. (Two headers, `error.hpp` and `data/common.hpp`,
 use the string "cuCascade stub:" as a cosmetic prefix on real runtime guards —
 a CUDA-error wrapper macro and a dynamic_cast-null check — not as stub markers.)
+
+Verification: the host-logic test compiles and passes on Linux and now
+covers the file-clone path (real I/O) and the allocator's construction and
+guard paths. The allocator's pinning and NUMA binding on real gfx942
+hardware remain unverified, as does everything else on the runtime side
+until a full GPU run happens.
 
 

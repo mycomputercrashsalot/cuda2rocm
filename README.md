@@ -61,12 +61,14 @@ cuCascade is NVIDIA's GPU memory-reservation and out-of-core data repository sys
 
 **Approach:** Use hipMM's `rmm::device_async_resource_ref` as the allocator interface, rocThrust/hipCUB for data movement. Match cuCascade's API exactly.
 
-**Status:** 32 headers, of which **30 are real implementations** and **2 still throw at runtime** (→ DuckDB CPU fallback). Verified by grepping every header for the `throw std::runtime_error("cuCascade stub: ...")` marker — the genuine stubs are:
+**Status:** All 32 headers are real implementations — the last two stubs (the disk-data representation and the NUMA-aware pinned allocator) are now implemented:
 
-- `data/disk_data_representation.hpp` — `get_disk_table()` / `clone()` throw
-- `memory/numa_region_pinned_host_allocator.hpp` — `allocate` / `operator rmm::...` throw
+- `data/disk_data_representation.hpp` — `clone()` copies the backing file to a new unique path (`memory::clone_disk_file` in `disk_table.hpp`) and wraps the new allocation; `get_size_in_bytes()` reports the allocation's byte count.
+- `memory/numa_region_pinned_host_allocator.hpp` — `allocate()` mmaps, binds the pages to the GPU's local NUMA node with `mbind(2)` (node resolved from sysfs by PCI bus ID, same scan as `topology_discovery`), then pins with `hipHostRegister`; `deallocate()` unpins and unmaps. If the node can't be resolved or mbind fails, the allocation still works, just not node-bound. Admission is bounded by `mem_limit` with the same single-counter CAS the fixed-size pool uses.
 
-The remaining 30 headers are real implementations. The full memory-reservation subsystem (`memory_space`, `reservation`, `memory_reservation_manager`, `fixed_size_host_memory_resource`, `reservation_aware_resource_adaptor`, `oom_handling_policy`, `error`, `small_pinned_host_memory_resource`), the full topology + event subsystem, the data-repository containers (`data_repository`, `data_repository_manager`), the data-batch lifecycle (`data_batch` clone/convert/set_data), the representation types (`gpu_table_representation::clone` via cudf::copy, `host_data_representation::clone` via hipMemcpyAsync), the representation converter registry, and the config/common/POD types are all ported. The 2 remaining stubs are the disk-data representation clone (deep-copy from disk, not yet exercised) and the NUMA-aware pinned allocator (needs numactl/mbind integration).
+The full memory-reservation subsystem (`memory_space`, `reservation`, `memory_reservation_manager`, `fixed_size_host_memory_resource`, `reservation_aware_resource_adaptor`, `oom_handling_policy`, `error`, `small_pinned_host_memory_resource`), the full topology + event subsystem, the data-repository containers (`data_repository`, `data_repository_manager`), the data-batch lifecycle (`data_batch` clone/convert/set_data), the representation types (`gpu_table_representation::clone` via cudf::copy, `host_data_representation::clone` via hipMemcpyAsync), the representation converter registry, and the config/common/POD types are all ported.
+
+Verification status, plainly: the host-logic test (`tests/test_cucascade_compile.cpp`) compiles and passes on Linux, now covering the file-clone path with real I/O and the allocator's construction/guard paths. The allocator's `hipHostRegister` path and the mbind binding still need a run on real gfx942 hardware to be called verified — the same gap as the rest of the runtime side of this port.
 
 See `cucascade-rocm/docs/api-surface.md` for the full API mapping and which scope items remain.
 

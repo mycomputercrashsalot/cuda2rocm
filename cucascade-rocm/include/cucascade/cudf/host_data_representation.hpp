@@ -55,7 +55,7 @@ class host_data_representation : public idata_representation {
   std::unique_ptr<idata_representation> clone(rmm::cuda_stream_view stream) override {
     if (!table_) {
       return std::make_unique<host_data_representation>(
-        std::unique_ptr<memory::host_table_allocation>(), &space());
+        std::unique_ptr<memory::host_table_allocation>(), &get_memory_space());
     }
 
     auto cols = table_->columns;
@@ -107,7 +107,7 @@ class host_data_representation : public idata_representation {
     }
 
     auto cloned_table = memory::host_table_allocation::create(new_alloc, std::move(cols), total_bytes);
-    return std::make_unique<host_data_representation>(std::move(cloned_table), &space());
+    return std::make_unique<host_data_representation>(std::move(cloned_table), &get_memory_space());
   }
 
   std::size_t get_size_in_bytes() const override { return table_ ? table_->total_bytes : 0; }
@@ -129,7 +129,7 @@ class host_data_packed_representation : public idata_representation {
   std::unique_ptr<idata_representation> clone(rmm::cuda_stream_view) override {
     auto cloned = std::make_unique<memory::host_table_packed_allocation>();
     if (alloc_) cloned->total_bytes = alloc_->total_bytes;
-    return std::make_unique<host_data_packed_representation>(std::move(cloned), space());
+    return std::make_unique<host_data_packed_representation>(std::move(cloned), get_memory_space());
   }
   std::size_t get_size_in_bytes() const override { return alloc_ ? alloc_->total_bytes : 0; }
   std::size_t get_uncompressed_data_size_in_bytes() const override { return get_size_in_bytes(); }

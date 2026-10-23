@@ -55,7 +55,10 @@ struct out_of_memory : std::bad_alloc {
 
 #include "cucascade/memory/memory_reservation.hpp"
 #include "cucascade/memory/oom_handling_policy.hpp"
+#include "cucascade/memory/numa_region_pinned_host_allocator.hpp"
+#include "cucascade/memory/disk_table.hpp"
 #include "cucascade/data/representation_converter.hpp"
+#include "cucascade/data/disk_data_representation.hpp"
 #include "cucascade/data/data_batch.hpp"
 #include "cucascade/data/data_repository.hpp"
 #include "cucascade/data/data_repository_manager.hpp"
@@ -63,8 +66,10 @@ struct out_of_memory : std::bad_alloc {
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
+#include <fstream>
 #include <memory>
 #include <string>
+#include <vector>
 
 int main() {
   using namespace cucascade;
@@ -133,6 +138,61 @@ int main() {
     data_repository_manager mgr;
     // No repositories registered; lookup should return null
     assert(mgr.get_repository(0, "default") == nullptr && "no repos registered");
+  }
+
+  // --- numa_region_pinned_host_memory_resource: ctors + guards ---
+  {
+    // benchmark ctor: no upstream, so the conversion has to throw
+    memory::numa_region_pinned_host_memory_resource numa(0, false);
+    bool threw = false;
+    try {
+      rmm::device_async_resource_ref ref =
+        static_cast<rmm::device_async_resource_ref>(numa);
+      (void)ref;
+    } catch (std::exception const&) {
+      threw = true;
+    }
+    assert(threw && "no-upstream conversion must throw");
+
+    // no gpu on the ci runner, so this is -1 here. on a real box it's the
+    // node number. just checking it doesn't blow up.
+    (void)memory::numa_region_pinned_host_memory_resource::resolve_numa_node(0);
+  }
+
+  // --- disk_table: clone_disk_file ---
+  {
+    std::string src = "/tmp/cucascade_clone_src.bin";
+    std::string dst = "/tmp/cucascade_clone_dst.bin";
+    std::vector<char> data(1000);
+    for (std::size_t i = 0; i < data.size(); ++i) {
+      data[i] = static_cast<char>(i % 251);
+    }
+    {
+      std::ofstream out(src, std::ios::binary);
+      out.write(data.data(), static_cast<std::streamsize>(data.size()));
+    }
+    memory::clone_disk_file(src, dst, data.size());
+    std::vector<char> readback(data.size());
+    {
+      std::ifstream in(dst, std::ios::binary);
+      in.read(readback.data(), static_cast<std::streamsize>(readback.size()));
+      assert(static_cast<std::size_t>(in.gcount()) == data.size() &&
+             "clone copied all bytes");
+    }
+    assert(readback == data && "clone is byte-identical");
+
+    // A short source must throw, not silently truncate.
+    bool threw = false;
+    try {
+      memory::clone_disk_file(src, dst + ".short", data.size() + 1);
+    } catch (std::exception const&) {
+      threw = true;
+    }
+    assert(threw && "clone past EOF must throw");
+
+    std::remove(src.c_str());
+    std::remove(dst.c_str());
+    std::remove((dst + ".short").c_str());
   }
 
   printf("cucascade-rovm compile + logic test: ALL PASSED\n");

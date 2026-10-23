@@ -54,14 +54,14 @@ class gpu_table_representation : public idata_representation {
   std::unique_ptr<idata_representation> clone(rmm::cuda_stream_view stream) override {
     if (!table_) {
       return std::make_unique<gpu_table_representation>(
-        std::unique_ptr<cudf::table>(), space(), stream);
+        std::unique_ptr<cudf::table>(), get_memory_space(), stream);
     }
     // cudf::copy returns a unique_ptr<cudf::table> — a full deep copy of all
     // columns, device data included. The stream orders the device-to-device
     // copies; the default memory resource (rmm) allocates the new buffers.
     auto cloned_table = cudf::copy(table_->view(), stream);
     return std::make_unique<gpu_table_representation>(
-      std::move(cloned_table), space(), stream);
+      std::move(cloned_table), get_memory_space(), stream);
   }
 
   std::size_t get_size_in_bytes() const override {
