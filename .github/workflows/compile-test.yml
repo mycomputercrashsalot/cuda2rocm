@@ -39,8 +39,9 @@ jobs:
           # with ROCm pre-installed, this step is a no-op.
           if ! command -v hipcc &>/dev/null; then
             echo "hipcc not found. Installing ROCm packages..."
-            wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
-            echo "deb [arch=amd64] https://repo.radeon.com/rocm/apt/6.2 noble main" \
+            wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key \
+              | gpg --dearmor | sudo tee /usr/share/keyrings/rocm.gpg > /dev/null
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.2 noble main" \
               | sudo tee /etc/apt/sources.list.d/rocm.list
             # Pin the radeon.com origin above Ubuntu's own repos so apt picks
             # the ROCm repo's versions (same fix sirius-rocm's CI needed —
