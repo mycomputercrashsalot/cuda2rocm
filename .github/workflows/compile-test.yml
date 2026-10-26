@@ -29,7 +29,10 @@ concurrency:
 jobs:
   compile-test:
     name: Cross-compile headers (gfx942, no GPU)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest flipped to 26.04, where the ROCm 6.2 repo's
+    # packages don't resolve (libpython3.12t64, libxml2 gone/renamed).
+    # The verification story is noble + ROCm 6.2 — bump when ROCm ships 26.04.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
