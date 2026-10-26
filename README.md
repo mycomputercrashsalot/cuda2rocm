@@ -30,8 +30,8 @@ target_link_libraries(my-target PRIVATE rocm-cuda-compat::cuda-compat-shims)
 cuCollections (cuco) is NVIDIA's GPU hash-map and Bloom-filter library, used by Sirius, RAPIDS, and the broader CUDA ecosystem. No ROCm port exists.
 
 **Scope:** Port the subset of cuco that Sirius uses:
-- `cuco::bloom_filter` (blocked Bloom filter) — 🔧 Drafted, needs testing
-- `cuco::static_set` (open-addressing hash set) — 🔧 Drafted, needs testing
+- `cuco::bloom_filter` (blocked Bloom filter) — 🔧 Compiles in CI, runtime pending
+- `cuco::static_set` (open-addressing hash set) — 🔧 Compiles in CI, runtime pending
 - `cuco::xxhash_64` (device-compatible xxHash) — ✅ Implemented
 - Supporting types: `cuco::extent`, `cuco::empty_key`, `cuco::arrow_filter_policy`,
   `cuco::default_filter_policy`, `cuco::double_hashing`, `cuco::default_hash_function`,
@@ -39,14 +39,15 @@ cuCollections (cuco) is NVIDIA's GPU hash-map and Bloom-filter library, used by 
 
 **Approach:** Use rocPRIM/hipCUB primitives (warp shuffles, atomicCAS) as building blocks, matching cuco's API surface exactly so downstream code compiles without changes. Target: `namespace cuco`, same headers, same templates.
 
-**Status:** Drafted (6 headers). Compile + runtime testing on gfx942 is
-**pending** — the test binaries (`test_bloom_filter.cu`, `test_static_set.cu`)
-are written and assert 7/7 keys found / 6/6 correct, but have not yet been
-compiled with hipcc and run on a real AMD GPU in this repo's CI. An earlier
-version of this README's "Verified on real hardware" section listed specific
-throughput figures (~3M keys/s, ~3.4M keys/s) for these; those claims are
-unreproduced and have been removed pending a real run. See the "Verified on
-real hardware" section below for what is and isn't actually verified.
+**Status:** Drafted (6 headers). The test binaries (`test_bloom_filter.cu`,
+`test_static_set.cu`) compile with hipcc in this repo's CI on every run and
+assert 7/7 keys found / 6/6 correct. What's still missing is a real run —
+GitHub-hosted runners have no /dev/kfd, so CI is compile-only there. An
+earlier version of this README's "Verified on real hardware" section listed
+specific throughput figures (~3M keys/s, ~3.4M keys/s) for these; those
+claims are unreproduced and have been removed pending a real run. See the
+"Verified on real hardware" section below for what is and isn't actually
+verified.
 
 ### 3. `cucascade-rocm` — cuCascade memory reservation port 🔧 In Progress
 
