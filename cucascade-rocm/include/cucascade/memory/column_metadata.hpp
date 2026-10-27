@@ -2,7 +2,7 @@
  * Copyright 2026, Sirius Contributors.
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
-//! @file cuCascade column_metadata — ROCm stub.
+//! @file cuCascade column_metadata — ROCm port.
 //! Used by host_table_allocation to describe each column's layout within
 //! the pinned host buffer. Sirius populates these fields in cpu_source_task.cpp.
 

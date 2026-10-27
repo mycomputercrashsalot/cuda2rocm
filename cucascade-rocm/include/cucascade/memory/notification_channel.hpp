@@ -2,7 +2,7 @@
  * Copyright 2026, Sirius Contributors.
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
-//! @file cuCascade notification_channel — ROCm stub.
+//! @file cuCascade notification_channel — ROCm port.
 
 #pragma once
 #include <functional>

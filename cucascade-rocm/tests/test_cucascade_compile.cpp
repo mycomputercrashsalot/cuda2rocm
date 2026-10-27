@@ -8,7 +8,7 @@
 //! This is a HOST compile test (no GPU required) that instantiates the real
 //! cucascade-rocm classes and exercises the non-GPU logic (reservation
 //! tracking, state transitions, converter registry). It catches API/signature
-//! drift between the stubs and the real cuCascade that Sirius subclasses.
+//! drift between the port and the real cuCascade that Sirius subclasses.
 //!
 //! Note: memory_space, stream_pool, event, and topology_discovery require
 //! rmm:: types and hip runtime APIs; those are verified by the shim compile

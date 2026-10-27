@@ -2,7 +2,7 @@
  * Copyright 2026, Sirius Contributors.
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
-//! @file cuCascade data_repository — ROCm stub (fully inline, nearly verbatim).
+//! @file cuCascade data_repository — ROCm port (fully inline, nearly verbatim).
 
 #pragma once
 #include "cucascade/data/data_batch.hpp"

@@ -3,7 +3,7 @@
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
 
-//! @file cuCascade OOM handling policy — ROCm stub.
+//! @file cuCascade OOM handling policy — ROCm port.
 //! Real virtual base — Sirius's defragmenter_oom_policy inherits this.
 
 #pragma once

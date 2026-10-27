@@ -15,7 +15,7 @@
  */
 
 //! @file
-//! cuCascade error types and macros — ROCm stub.
+//! cuCascade error types and macros — ROCm port.
 //!
 //! Provides @c cucascade::cuda_error, @c cucascade::logic_error, and the
 //! @c CUCASCADE_CUDA_TRY / @c CUCASCADE_FAIL macros. The macros wrap
@@ -54,7 +54,7 @@ struct logic_error : std::logic_error {
     if (cudaSuccess != _cucascade_err) {                                       \
       cudaGetLastError();                                                      \
       throw ::cucascade::cuda_error(                                           \
-        std::string{"cuCascade stub: CUDA error: "} +                          \
+        std::string{"cucascade-rocm: CUDA error: "} +                          \
         cudaGetErrorString(_cucascade_err));                                   \
     }                                                                          \
   } while (0)

@@ -2,7 +2,7 @@
  * Copyright 2026, Sirius Contributors.
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
-//! @file cuCascade host_table_allocation — ROCm stub.
+//! @file cuCascade host_table_allocation — ROCm port.
 //! Holds a pinned host buffer (multiple_blocks_allocation) + per-column
 //! metadata describing the layout within that buffer.
 

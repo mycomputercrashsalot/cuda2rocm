@@ -2,7 +2,7 @@
  * Copyright 2026, Sirius Contributors.
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
-//! @file cuCascade chunked_resource_info — ROCm stub.
+//! @file cuCascade chunked_resource_info — ROCm port.
 
 #pragma once
 #include <cstddef>

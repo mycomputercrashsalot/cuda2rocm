@@ -150,8 +150,8 @@ inline void register_builtin_converters(representation_converter_registry& regis
       // host_table_allocation's column_metadata should carry. For the minimal
       // port, we deep-copy the host buffer to a device buffer and let the
       // caller (Sirius) interpret the layout — the cudf::table construction
-      // from raw device pointers requires column type info that isn't in the
-      // stub column_metadata yet.
+      // from raw device pointers requires column type info that column_metadata
+      // doesn't carry yet.
       //
       // This is the one converter that's not fully real: it allocates the
       // device buffer and copies the data, but doesn't reconstruct the

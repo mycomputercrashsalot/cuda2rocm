@@ -4,7 +4,7 @@
  */
 
 //! @file
-//! cuCascade memory error types — ROCm stub.
+//! cuCascade memory error types — ROCm port.
 
 #pragma once
 

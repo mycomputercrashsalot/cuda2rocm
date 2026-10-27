@@ -82,11 +82,10 @@ real implementations (not stubs) for the core subsystem:
 The headers in `cucascade-rocm/include/cucascade/` (consumed by Sirius via
 FetchContent) are all real implementations — the last two stubs (the
 disk-data representation clone and the NUMA-aware pinned allocator) were
-implemented. The `throw std::runtime_error("cuCascade stub: ...")` marker
-is gone from both of them; the two remaining occurrences of the string
-(`error.hpp`'s CUDA-error wrapper prefix and `data/common.hpp`'s
-dynamic_cast-null guard) are real runtime guards that predate this change
-and are documented below.
+implemented. The `cuCascade stub:` marker string is gone from the tree
+entirely; the runtime guards that used to carry it (`error.hpp`'s
+CUDA-error wrapper and `data/common.hpp`'s dynamic_cast-null check) now
+prefix their messages with `cucascade-rocm:`.
 
 What the last two implementations do:
 
@@ -100,9 +99,9 @@ The memory-reservation subsystem, the data-batch lifecycle
 cudf::copy / hipMemcpyAsync), topology discovery, events, the
 data-repository containers, and the representation converter registry are
 real implementations backed by hipMalloc/hipMallocHost/hipEvent*/
-hipGetDevice* calls, not stubs. (Two headers, `error.hpp` and `data/common.hpp`,
-use the string "cuCascade stub:" as a cosmetic prefix on real runtime guards —
-a CUDA-error wrapper macro and a dynamic_cast-null check — not as stub markers.)
+hipGetDevice* calls, not stubs. (`error.hpp`'s CUDA-error wrapper macro and
+`data/common.hpp`'s dynamic_cast-null check throw real runtime errors,
+prefixed `cucascade-rocm:`.)
 
 Verification: the host-logic test compiles and passes on Linux and now
 covers the file-clone path (real I/O) and the allocator's construction and

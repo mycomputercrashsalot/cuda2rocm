@@ -4,7 +4,7 @@
  */
 
 //! @file
-//! cuCascade memory_reservation_manager — ROCm stub.
+//! cuCascade memory_reservation_manager — ROCm port.
 //! This is a REAL virtual base class — Sirius's sirius_memory_reservation_manager
 //! inherits from it.
 

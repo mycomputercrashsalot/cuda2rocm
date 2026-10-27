@@ -2,7 +2,7 @@
  * Copyright 2026, Sirius Contributors.
  * Licensed under the Apache License, Version 2.0 (see LICENSE).
  */
-//! @file cuCascade data_repository_manager — ROCm stub (fully inline).
+//! @file cuCascade data_repository_manager — ROCm port (fully inline).
 
 #pragma once
 #include "cucascade/data/data_repository.hpp"

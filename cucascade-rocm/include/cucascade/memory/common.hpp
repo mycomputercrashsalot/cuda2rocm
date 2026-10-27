@@ -4,7 +4,7 @@
  */
 
 //! @file
-//! cuCascade memory common types — ROCm stub.
+//! cuCascade memory common types — ROCm port.
 //! Tier enum, memory_space_id, config structs, traits.
 
 #pragma once

@@ -4,7 +4,7 @@
  */
 
 //! @file
-//! cuCascade memory reservation — ROCm stub.
+//! cuCascade memory reservation — ROCm port.
 
 #pragma once
 

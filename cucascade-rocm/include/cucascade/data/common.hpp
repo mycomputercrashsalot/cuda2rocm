@@ -69,7 +69,7 @@ class idata_representation {
   template <typename TargetType>
   TargetType& cast() {
     auto* ptr = dynamic_cast<TargetType*>(this);
-    if (!ptr) throw std::runtime_error("cuCascade stub: cast failed");
+    if (!ptr) throw std::runtime_error("cucascade-rocm: cast failed");
     return *ptr;
   }
 
@@ -77,7 +77,7 @@ class idata_representation {
   template <typename TargetType>
   TargetType const& cast() const {
     auto const* ptr = dynamic_cast<TargetType const*>(this);
-    if (!ptr) throw std::runtime_error("cuCascade stub: cast failed");
+    if (!ptr) throw std::runtime_error("cucascade-rocm: cast failed");
     return *ptr;
   }
 
