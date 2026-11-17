@@ -1,0 +1,78 @@
+name: GPU Simulator
+
+# Optional check. Hosted runners have no /dev/kfd, so compile-test.yml can only
+# cross-compile the cuco-rocm tests. This workflow also runs them, on a
+# simulated AMD MI300X (gfx942) with PantheonSim
+# (https://github.com/pantheongpu/pantheonsim). It is a simulation, not
+# hardware: it cannot reproduce hardware-specific behavior or timing, and it
+# does not replace testing on a real GPU.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'cuda-compat-shims/**'
+      - 'cuco-rocm/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/gpu-sim.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cuco-rocm-sim:
+    name: cuco-rocm tests on ROCm 7.2 and simulated MI300X
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+
+      - name: Set up the simulated GPU and ROCm
+        uses: pantheongpu/setup-pantheonsim@deff5781e8adfd83dec98dd5242dcbc96a564773 # v0.1.10
+        with:
+          gpu: amd/mi300x
+          cuda-toolkit: none
+          rocm: "7.2"
+
+      # The action installs the compiler side only. The cub shim needs hipCUB.
+      - name: Install hipCUB, rocThrust, comgr and the HSA runtime
+        run: sudo apt-get install -y comgr hsa-rocr hipcub-dev rocthrust-dev rocprim-dev
+
+      # Same hipcc command lines as compile-test.yml, plus -O2 (the simulator
+      # handles unoptimized HIP code poorly). assert() stays enabled.
+      - name: Build tests
+        run: |
+          export PATH="$PATH:/opt/rocm/bin"
+          for t in test_static_set test_bloom_filter; do
+            hipcc -O2 -o "$t" "cuco-rocm/tests/$t.cu" \
+              -I cuco-rocm/include -I cuda-compat-shims/include \
+              --offload-arch=gfx942
+          done
+
+      # Each test asserts its results on the device output and prints
+      # "TEST PASSED". A wrong architecture can print a simulator error and
+      # still exit 0, and a missing device must not pass silently, so the
+      # output is checked as well.
+      - name: Run tests
+        run: |
+          status=0
+          for t in test_static_set test_bloom_filter; do
+            echo "::group::$t"
+            vgpu run "./$t" 2>&1 | tee "$t.log"
+            rc=${PIPESTATUS[0]}
+            echo "::endgroup::"
+            if [ "$rc" -ne 0 ] || ! grep -q "^TEST PASSED$" "$t.log" \
+               || grep -qiE "VirtualGPU error|no device|no ROCm-capable|HIP error|false positive" "$t.log"; then
+              echo "::error::$t failed (exit $rc)"
+              status=1
+            fi
+          done
+          grep -h "^Result:" test_static_set.log test_bloom_filter.log
+          exit $status
